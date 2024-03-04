@@ -59,10 +59,10 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
   const cliPullRequestDataAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
 
   const GetPullRequestDataFiles = await GetPullRequestData(github.context.issue.number)
-  const cliPullRequestDataFilesAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
+  // const cliPullRequestDataFilesAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
 
   const yuyu =  GetPullRequestDataFiles as {
-    "files":[{}]
+    "files":[]
   }
   const files = yuyu.files
   console.log(files)
