@@ -58,6 +58,14 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
   const cliPullRequestData = await GetPullRequestData(github.context.issue.number)
   const cliPullRequestDataAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
 
+  const GetPullRequestDataFiles = await GetPullRequestData(github.context.issue.number)
+  const cliPullRequestDataFilesAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
+
+  const yuyu =  GetPullRequestDataFiles as {
+    "files":[{}]
+  }
+  const files = yuyu.files
+  console.log(files)
   // transform PR data to a typed model
   const pullRequestDataModel = PullRequest.CreateFromJson(cliPullRequestData)
   // generate the report of the typed model
