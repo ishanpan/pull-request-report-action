@@ -70,7 +70,7 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
     console.log(x);
   })
 
-  console.log(files)
+  // console.log(files)
   // transform PR data to a typed model
   const pullRequestDataModel = PullRequest.CreateFromJson(cliPullRequestData)
   // generate the report of the typed model

@@ -916,7 +916,7 @@ const run = async (inputsFromWorkflow) => {
         let x = arrayItem.path;
         console.log(x);
     });
-    console.log(files);
+    // console.log(files)
     // transform PR data to a typed model
     const pullRequestDataModel = PullRequest_Definitions_1.PullRequest.CreateFromJson(cliPullRequestData);
     // generate the report of the typed model
