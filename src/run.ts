@@ -65,6 +65,11 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
     "files":[]
   }
   const files = yuyu.files
+  files.forEach(function (arrayItem: { path:string}) {
+    let x = arrayItem.path
+    console.log(x);
+  })
+
   console.log(files)
   // transform PR data to a typed model
   const pullRequestDataModel = PullRequest.CreateFromJson(cliPullRequestData)
