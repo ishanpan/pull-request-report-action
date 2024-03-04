@@ -909,9 +909,13 @@ const run = async (inputsFromWorkflow) => {
     const cliPullRequestData = await (0, GitHubCliHelper_1.GetPullRequestData)(github.context.issue.number);
     const cliPullRequestDataAsString = (0, exports.SanitizeMarkdownComment)(JSON.stringify(cliPullRequestData));
     const GetPullRequestDataFiles = await (0, GitHubCliHelper_1.GetPullRequestData)(github.context.issue.number);
-    const cliPullRequestDataFilesAsString = (0, exports.SanitizeMarkdownComment)(JSON.stringify(cliPullRequestData));
+    // const cliPullRequestDataFilesAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
     const yuyu = GetPullRequestDataFiles;
     const files = yuyu.files;
+    files.forEach(function (arrayItem) {
+        let x = arrayItem.path;
+        console.log(x);
+    });
     console.log(files);
     // transform PR data to a typed model
     const pullRequestDataModel = PullRequest_Definitions_1.PullRequest.CreateFromJson(cliPullRequestData);
