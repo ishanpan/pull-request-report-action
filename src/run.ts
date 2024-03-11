@@ -9,6 +9,7 @@ import * as fs from 'fs'
 import { ConfigurationInputs } from './action.config.type'
 import { IPullRequest } from './Interfaces/PullRequestTypes'
 import { IReport } from './Interfaces/ReportTypes'
+import 'node-fetch'
 
 export const SanitizeMarkdownComment = (comment: string): string => {
   return comment.replaceAll(/<!--/g, '&lt;!--').replaceAll(/-->/g, '--&gt;')
