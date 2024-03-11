@@ -912,11 +912,18 @@ const run = async (inputsFromWorkflow) => {
     // const cliPullRequestDataFilesAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
     const yuyu = GetPullRequestDataFiles;
     const files = yuyu.files;
-    files.forEach(function (arrayItem) {
+    files.forEach(async function (arrayItem) {
         let x = arrayItem.path;
-        console.log(x);
+        const response = await fetch("http://ingbtcpic5nbe33:8000/getfunctionalarea", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(x)
+        });
+        const fnmap = await response.json();
+        console.log(fnmap);
     });
-    // console.log(files)
     // transform PR data to a typed model
     const pullRequestDataModel = PullRequest_Definitions_1.PullRequest.CreateFromJson(cliPullRequestData);
     // generate the report of the typed model
