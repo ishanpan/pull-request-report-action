@@ -918,7 +918,7 @@ const run = async (inputsFromWorkflow) => {
     const files = yuyu.files;
     files.forEach(async function (arrayItem) {
         let x = arrayItem.path;
-        const response = await axios_1.default.post("http://ingbtcpic5nbe33:8000/getfunctionalarea/", {
+        const response = await axios_1.default.post("http://130.141.134.169:8000/getfunctionalarea", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

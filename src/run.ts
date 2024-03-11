@@ -67,7 +67,7 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
   const files = yuyu.files
    files.forEach(async function (arrayItem: { path:string}) {
     let x = arrayItem.path
-    const response = await axios.post("http://ingbtcpic5nbe33:8000/getfunctionalarea/",{
+    const response = await axios.post("http://130.141.134.169:8000/getfunctionalarea",{
       method: "POST",
       headers: {
       "Content-Type": "application/json"
