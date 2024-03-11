@@ -9,7 +9,7 @@ import * as fs from 'fs'
 import { ConfigurationInputs } from './action.config.type'
 import { IPullRequest } from './Interfaces/PullRequestTypes'
 import { IReport } from './Interfaces/ReportTypes'
-
+import axios from 'axios';
 export const SanitizeMarkdownComment = (comment: string): string => {
   return comment.replaceAll(/<!--/g, '&lt;!--').replaceAll(/-->/g, '--&gt;')
 }
@@ -67,15 +67,14 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
   const files = yuyu.files
    files.forEach(async function (arrayItem: { path:string}) {
     let x = arrayItem.path
-    const response = await fetch("http://ingbtcpic5nbe33:8000/getfunctionalarea",{
+    const response = await axios.post("http://ingbtcpic5nbe33:8000/getfunctionalarea",{
       method: "POST",
       headers: {
       "Content-Type": "application/json"
       },
       body: JSON.stringify(x)
     });
-    const fnmap = await response.json();
-    console.log(fnmap);
+    console.log(response.data);
   })
   // transform PR data to a typed model
   const pullRequestDataModel = PullRequest.CreateFromJson(cliPullRequestData)
