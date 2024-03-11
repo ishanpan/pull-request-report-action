@@ -918,13 +918,15 @@ const run = async (inputsFromWorkflow) => {
     const files = yuyu.files;
     files.forEach(async function (arrayItem) {
         let x = arrayItem.path;
-        const response = await axios_1.default.post("http://130.141.134.169:8000/getfunctionalarea", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(x)
-        });
+        // const response = await axios.post("http://130.141.134.169:8000/getfunctionalarea",{
+        //   method: "POST",
+        //   headers: {
+        //   "Content-Type": "application/json"
+        //   },
+        //   body: JSON.stringify(x)
+        // });
+        // console.log(response.data);
+        const response = await axios_1.default.get('http://ingbtcpic5nbe33:8000/getfunctionalarea/');
         console.log(response.data);
     });
     // transform PR data to a typed model

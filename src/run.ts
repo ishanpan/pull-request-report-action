@@ -67,13 +67,15 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
   const files = yuyu.files
    files.forEach(async function (arrayItem: { path:string}) {
     let x = arrayItem.path
-    const response = await axios.post("http://130.141.134.169:8000/getfunctionalarea",{
-      method: "POST",
-      headers: {
-      "Content-Type": "application/json"
-      },
-      body: JSON.stringify(x)
-    });
+    // const response = await axios.post("http://130.141.134.169:8000/getfunctionalarea",{
+    //   method: "POST",
+    //   headers: {
+    //   "Content-Type": "application/json"
+    //   },
+    //   body: JSON.stringify(x)
+    // });
+    // console.log(response.data);
+    const response = await axios.get('http://ingbtcpic5nbe33:8000/getfunctionalarea/')
     console.log(response.data);
   })
   // transform PR data to a typed model
