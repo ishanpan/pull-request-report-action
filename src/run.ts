@@ -65,12 +65,18 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
     "files":[]
   }
   const files = yuyu.files
-  files.forEach(function (arrayItem: { path:string}) {
+   files.forEach(async function (arrayItem: { path:string}) {
     let x = arrayItem.path
-    console.log(x);
+    const response = await fetch("http://ingbtcpic5nbe33:8000/getfunctionalarea",{
+      method: "POST",
+      headers: {
+      "Content-Type": "application/json"
+      },
+      body: JSON.stringify(x)
+    });
+    const fnmap = await response.json();
+    console.log(fnmap);
   })
-
-  // console.log(files)
   // transform PR data to a typed model
   const pullRequestDataModel = PullRequest.CreateFromJson(cliPullRequestData)
   // generate the report of the typed model
