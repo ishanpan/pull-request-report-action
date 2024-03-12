@@ -31,13 +31,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AddCommentToPR = exports.GetPullRequestDataFiles = exports.GetPullRequestData = void 0;
+exports.GetPullRequestData = void 0;
 // use util to make exec a promise
 const util = __importStar(__nccwpck_require__(3837));
 const child_process_1 = __nccwpck_require__(2081);
 const execAsync = util.promisify(child_process_1.exec);
 const gh_cli_arguments = `--json "additions,assignees,author,baseRefName,body,changedFiles,closed,closedAt,comments,commits,createdAt,deletions,files,headRefName,headRefOid,headRepository,headRepositoryOwner,id,isCrossRepository,isDraft,labels,latestReviews,maintainerCanModify,mergeCommit,mergeStateStatus,mergeable,mergedAt,mergedBy,milestone,number,potentialMergeCommit,projectCards,projectItems,reactionGroups,reviewDecision,reviewRequests,reviews,state,statusCheckRollup,title,updatedAt,url"`;
-const gh_cli_arguments_files = `--json "files"`;
+const gh_cli_arguments_files = (/* unused pure expression or super */ null && (`--json "files"`));
 const GetPullRequestData = async (pullRequestNumber, repo = '') => {
     let pullRequestData = undefined;
     let repoName = '';
@@ -53,479 +53,27 @@ const GetPullRequestData = async (pullRequestNumber, repo = '') => {
     return JSON.parse(pullRequestData);
 };
 exports.GetPullRequestData = GetPullRequestData;
-const GetPullRequestDataFiles = async (pullRequestNumber, repo = '') => {
-    let pullRequestData = undefined;
-    let repoName = '';
-    if (repo !== '') {
-        repoName = `--repo ${repo}`;
-    }
-    const ghCliCommand = `gh pr view ${pullRequestNumber} ${gh_cli_arguments_files} ${repoName}`;
-    const { stdout, stderr } = await execAsync(ghCliCommand);
-    if (stdout === ``) {
-        throw new Error(`No data returned from GitHub CLI. Command: ${ghCliCommand} \n Stderr: ${stderr}`);
-    }
-    pullRequestData = stdout;
-    return JSON.parse(pullRequestData);
-};
-exports.GetPullRequestDataFiles = GetPullRequestDataFiles;
-const AddCommentToPR = async (commentFile, prNumber) => {
-    const ghCliCommand = `gh pr comment ${prNumber} --body-file ${commentFile}`;
-    const { stdout, stderr } = await execAsync(ghCliCommand);
-    if (stdout === ``) {
-        throw new Error(`No data returned from GitHub CLI. Command: ${ghCliCommand} \n Stderr: ${stderr}`);
-    }
-};
-exports.AddCommentToPR = AddCommentToPR;
-
-
-/***/ }),
-
-/***/ 4725:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// for license and copyright look at the repository
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GetTotalNumberOfParticipants = exports.GetNumberOfPullRequestCommitter = exports.GetNumberOfActivePullRequestReviewParticipants = exports.GetUniqueCommitterParticipants = exports.GetUniqueCommentParticipants = exports.GetUniqueReviewParticipants = exports.GetNumberOfApprovedReviews = exports.GetNumberOfRequestedChangeReviews = exports.GetNumberOfCommentOnlyReviews = exports.GetTimeSpendInPrForLastStatusCheckRun = exports.GetTotalRuntimeForLastStatusCheckRun = exports.GetTimeToMergeAfterLastReview = exports.GetTimeSpendOnBranchBeforePRMerged = exports.GetTimeSpendOnBranchBeforePRCreated = exports.GetLeadTimeForPullRequest = exports.GetMergedOrClosedDate = exports.MillisecondsToReadableDuration = exports.GenerateEventTimeline = void 0;
-const GenerateEventTimeline = (pullRequest) => {
-    const events = [];
-    // merge all interesting events into a single list
-    events.push([
-        { type: 'createAt', date: new Date(pullRequest.createdAt), event_instance: pullRequest.createdAt, time: 0 },
-    ]);
-    events.push(pullRequest.commits.map((commit) => ({
-        type: 'commit',
-        date: new Date(commit.authorDate),
-        event_instance: commit,
-        time: 0,
-    })));
-    events.push(pullRequest.reviews.map((review) => ({
-        type: 'review',
-        date: new Date(review.submittedAt),
-        event_instance: review,
-        time: 0,
-    })));
-    events.push(pullRequest.statusChecks.map((statusCheck) => ({
-        type: 'statusCheck',
-        date: new Date(statusCheck.completedAt),
-        event_instance: statusCheck,
-        time: 0,
-    })));
-    events.push(pullRequest.comments.map((comment) => ({
-        type: 'comment',
-        date: new Date(comment.createdAt),
-        event_instance: comment,
-        time: 0,
-    })));
-    events.push([
-        { type: 'mergedAt', date: new Date(pullRequest.mergedAt), event_instance: pullRequest.mergedAt, time: 0 },
-    ]);
-    events.push([
-        { type: 'closedAt', date: new Date(pullRequest.closedAt), event_instance: pullRequest.closedAt, time: 0 },
-    ]);
-    // flatten the list
-    const flattenedEvents = events.flat();
-    // filter out events that don't have a valid date
-    const filteredEvents = flattenedEvents.filter((event) => event.date !== null);
-    // sort the events by date
-    filteredEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
-    // now, create a list of events with the time between events
-    const eventsWithTime = [];
-    // calculate the time between events
-    for (let i = 0; i < filteredEvents.length; i++) {
-        if (i === 0) {
-            eventsWithTime.push({
-                type: filteredEvents[i].type,
-                date: filteredEvents[i].date,
-                time: 0,
-                event_instance: filteredEvents[i].event_instance,
-            });
-        }
-        else {
-            eventsWithTime.push({
-                type: filteredEvents[i].type,
-                date: filteredEvents[i].date,
-                time: (filteredEvents[i].date.getTime() - filteredEvents[i - 1].date.getTime()) / 1000,
-                event_instance: filteredEvents[i].event_instance,
-            });
-        }
-    }
-    return eventsWithTime;
-};
-exports.GenerateEventTimeline = GenerateEventTimeline;
-const MillisecondsToReadableDuration = (leadTimeInMSec) => {
-    const seconds = +(leadTimeInMSec / 1000).toFixed(1);
-    const minutes = +(leadTimeInMSec / (1000 * 60)).toFixed(1);
-    const hours = +(leadTimeInMSec / (1000 * 60 * 60)).toFixed(1);
-    const days = +(leadTimeInMSec / (1000 * 60 * 60 * 24)).toFixed(1);
-    if (seconds < 60)
-        return `${seconds} Sec`;
-    else if (minutes < 60)
-        return `${minutes} Min`;
-    else if (hours < 24)
-        return `${hours} Hours`;
-    else
-        return `${days} Days`;
-};
-exports.MillisecondsToReadableDuration = MillisecondsToReadableDuration;
-const GetMergedOrClosedDate = (pullRequest) => {
-    let mergedOrClosedAt = pullRequest.mergedAt;
-    if (mergedOrClosedAt == null)
-        mergedOrClosedAt = pullRequest.closedAt;
-    return mergedOrClosedAt;
-};
-exports.GetMergedOrClosedDate = GetMergedOrClosedDate;
-const GetLeadTimeForPullRequest = (pullRequest) => {
-    // parse createAt as date from string
-    const createAt = new Date(pullRequest.createdAt);
-    const mergedOrClosedAt = new Date((0, exports.GetMergedOrClosedDate)(pullRequest));
-    const duration = mergedOrClosedAt.getTime() - createAt.getTime();
-    if (duration <= 0 || isNaN(duration))
-        return 0;
-    return duration;
-};
-exports.GetLeadTimeForPullRequest = GetLeadTimeForPullRequest;
-const GetTimeSpendOnBranchBeforePRCreated = (pullRequest) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const createAtEvent = eventTimeline.find((event) => event.type === 'createAt');
-    const firstCommitEvent = eventTimeline.find((event) => event.type === 'commit');
-    if (!createAtEvent || !firstCommitEvent)
-        return 0;
-    const duration = createAtEvent.date.getTime() - firstCommitEvent.date.getTime();
-    if (duration <= 0 || isNaN(duration))
-        return 0;
-    return duration;
-};
-exports.GetTimeSpendOnBranchBeforePRCreated = GetTimeSpendOnBranchBeforePRCreated;
-const GetTimeSpendOnBranchBeforePRMerged = (pullRequest) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const mergedAtEvent = eventTimeline.find((event) => event.type === 'mergedAt');
-    const firstCommitEvent = eventTimeline.find((event) => event.type === 'commit');
-    if (mergedAtEvent && firstCommitEvent && mergedAtEvent.date.getTime() > firstCommitEvent.date.getTime()) {
-        return mergedAtEvent.date.getTime() - firstCommitEvent.date.getTime();
-    }
-    return -1;
-};
-exports.GetTimeSpendOnBranchBeforePRMerged = GetTimeSpendOnBranchBeforePRMerged;
-const GetTimeToMergeAfterLastReview = (pullRequest) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const mergedAtEvent = eventTimeline.find((event) => event.type === 'mergedAt');
-    const reviewEvents = eventTimeline.filter((event) => event.type === 'review');
-    if (reviewEvents.length <= 0) {
-        return -1;
-    }
-    const lastReviewEvent = reviewEvents.reverse()[0];
-    if (mergedAtEvent && lastReviewEvent && mergedAtEvent.date.getTime() > lastReviewEvent.date.getTime()) {
-        return mergedAtEvent.date.getTime() - lastReviewEvent.date.getTime();
-    }
-    return -1;
-};
-exports.GetTimeToMergeAfterLastReview = GetTimeToMergeAfterLastReview;
-const GetTotalRuntimeForLastStatusCheckRun = (pullRequest) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const statusCheckEvents = eventTimeline
-        .filter((event) => event.type === 'statusCheck')
-        .map((event) => event.event_instance)
-        .filter((statusCheck) => statusCheck.status == 'COMPLETED');
-    if (statusCheckEvents.length <= 0) {
-        return 0;
-    }
-    let totalTime = 0;
-    statusCheckEvents.forEach((statusCheck) => {
-        totalTime += new Date(statusCheck.completedAt).getTime() - new Date(statusCheck.startedAt).getTime();
-    });
-    return totalTime;
-};
-exports.GetTotalRuntimeForLastStatusCheckRun = GetTotalRuntimeForLastStatusCheckRun;
-const GetTimeSpendInPrForLastStatusCheckRun = (pullRequest) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const statusCheckEvents = eventTimeline
-        .filter((event) => event.type === 'statusCheck')
-        .map((event) => event.event_instance)
-        .filter((statusCheck) => statusCheck.status == 'COMPLETED');
-    if (statusCheckEvents.length <= 0) {
-        return 0;
-    }
-    let earliestStart = new Date();
-    let latestCompletion = new Date(0, 0, 0);
-    statusCheckEvents.forEach((statusCheckEvent) => {
-        const completedDate = new Date(statusCheckEvent.completedAt);
-        const startedDate = new Date(statusCheckEvent.startedAt);
-        if (startedDate < earliestStart) {
-            earliestStart = startedDate;
-        }
-        if (completedDate > latestCompletion) {
-            latestCompletion = completedDate;
-        }
-    });
-    return latestCompletion.getTime() - earliestStart.getTime();
-};
-exports.GetTimeSpendInPrForLastStatusCheckRun = GetTimeSpendInPrForLastStatusCheckRun;
-const FilterReviewsByState = (pullRequest, state) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const reviewEvents = eventTimeline.filter((event) => event.type === 'review');
-    if (reviewEvents.length <= 0) {
-        return [];
-    }
-    const filteredReviews = reviewEvents.filter((reviewEvent) => {
-        const review = reviewEvent.event_instance;
-        return review.state === state;
-    });
-    return filteredReviews;
-};
-const GetNumberOfCommentOnlyReviews = (pullRequest) => {
-    return FilterReviewsByState(pullRequest, 'COMMENTED').length;
-};
-exports.GetNumberOfCommentOnlyReviews = GetNumberOfCommentOnlyReviews;
-const GetNumberOfRequestedChangeReviews = (pullRequest) => {
-    return FilterReviewsByState(pullRequest, 'CHANGES_REQUESTED').length;
-};
-exports.GetNumberOfRequestedChangeReviews = GetNumberOfRequestedChangeReviews;
-const GetNumberOfApprovedReviews = (pullRequest) => {
-    return FilterReviewsByState(pullRequest, 'APPROVED').length;
-};
-exports.GetNumberOfApprovedReviews = GetNumberOfApprovedReviews;
-const GetUniqueReviewParticipants = (pullRequest) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const reviewEvents = eventTimeline.filter((event) => event.type === 'review');
-    // extract unique reviewers from review events
-    return reviewEvents
-        .map((reviewEvent) => reviewEvent.event_instance)
-        .map((review) => review.authorLogin)
-        .filter((value, index, self) => self.indexOf(value) === index);
-};
-exports.GetUniqueReviewParticipants = GetUniqueReviewParticipants;
-const GetUniqueCommentParticipants = (pullRequest) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const commentEvents = eventTimeline.filter((event) => event.type === 'comment');
-    // extract unique commenter from review events
-    return commentEvents
-        .map((commentEvent) => commentEvent.event_instance)
-        .map((comment) => comment.authorLogin)
-        .filter((value, index, self) => self.indexOf(value) === index);
-};
-exports.GetUniqueCommentParticipants = GetUniqueCommentParticipants;
-const GetUniqueCommitterParticipants = (pullRequest) => {
-    const eventTimeline = (0, exports.GenerateEventTimeline)(pullRequest);
-    const commitEvents = eventTimeline.filter((event) => event.type === 'commit');
-    // extract unique reviewers from review events
-    return commitEvents
-        .map((commitEvent) => commitEvent.event_instance)
-        .map((commit) => commit.authors.filter((author) => author.login !== null).map((author) => author.login))
-        .flat()
-        .filter((value, index, self) => self.indexOf(value) === index);
-};
-exports.GetUniqueCommitterParticipants = GetUniqueCommitterParticipants;
-const GetNumberOfActivePullRequestReviewParticipants = (pullRequest) => {
-    const uniqueReviewers = (0, exports.GetUniqueReviewParticipants)(pullRequest);
-    const uniqueCommenter = (0, exports.GetUniqueCommentParticipants)(pullRequest);
-    return uniqueReviewers.concat(uniqueCommenter).filter((value, index, self) => self.indexOf(value) === index).length;
-};
-exports.GetNumberOfActivePullRequestReviewParticipants = GetNumberOfActivePullRequestReviewParticipants;
-const GetNumberOfPullRequestCommitter = (pullRequest) => {
-    return (0, exports.GetUniqueCommitterParticipants)(pullRequest).length;
-};
-exports.GetNumberOfPullRequestCommitter = GetNumberOfPullRequestCommitter;
-const GetTotalNumberOfParticipants = (pullRequest) => {
-    return (0, exports.GetNumberOfActivePullRequestReviewParticipants)(pullRequest) + (0, exports.GetNumberOfPullRequestCommitter)(pullRequest);
-};
-exports.GetTotalNumberOfParticipants = GetTotalNumberOfParticipants;
-
-
-/***/ }),
-
-/***/ 7693:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// for license and copyright look at the repository
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Report = exports.ReportConfigurationEntry = exports.ConfigurationInfo = exports.ConfigurationCategoryTitleMap = exports.ConfigurationCategory = void 0;
-var ConfigurationCategory;
-(function (ConfigurationCategory) {
-    ConfigurationCategory[ConfigurationCategory["None"] = 0] = "None";
-    ConfigurationCategory[ConfigurationCategory["StaticMeasures"] = 1] = "StaticMeasures";
-    ConfigurationCategory[ConfigurationCategory["TimeRelatedMeasures"] = 2] = "TimeRelatedMeasures";
-    ConfigurationCategory[ConfigurationCategory["StatusCheckRelatedMeasures"] = 3] = "StatusCheckRelatedMeasures";
-    ConfigurationCategory[ConfigurationCategory["ReportGeneratorValue"] = 4] = "ReportGeneratorValue";
-})(ConfigurationCategory || (exports.ConfigurationCategory = ConfigurationCategory = {}));
-exports.ConfigurationCategoryTitleMap = new Map([
-    [ConfigurationCategory.None, 'None'],
-    [ConfigurationCategory.StaticMeasures, 'Static measures'],
-    [ConfigurationCategory.TimeRelatedMeasures, 'Time related measures'],
-    [ConfigurationCategory.StatusCheckRelatedMeasures, 'Status check related measures'],
-    [ConfigurationCategory.ReportGeneratorValue, 'Report generator related predefined strings'],
-]);
-class ConfigurationInfo {
-    constructor(label, presentationValue, value, configName, defaultConfigValue, configurationCategory) {
-        this.Description = label;
-        this.PresentationValue = presentationValue;
-        this.Value = value;
-        this.ConfigurationName = configName;
-        this.ConfigValue = defaultConfigValue;
-        this.ConfigurationCategory = configurationCategory;
-    }
-}
-exports.ConfigurationInfo = ConfigurationInfo;
-class ReportConfigurationEntry {
-    constructor(id = '', info, measureCallback = () => '') {
-        this.Id = id;
-        this.Info = info;
-        this.PullRequestCallback = measureCallback;
-    }
-}
-exports.ReportConfigurationEntry = ReportConfigurationEntry;
-class Report {
-    constructor() {
-        this.Id = '';
-        this.Description = '';
-        this.Entries = [];
-    }
-}
-exports.Report = Report;
-
-
-/***/ }),
-
-/***/ 7771:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// for license and copyright look at the repository
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GetCommentCount = exports.GetReviewCount = exports.GetCommitsCount = exports.GetChangedFilesCount = exports.GetDeletedLines = exports.GetAddedLines = void 0;
-const GetAddedLines = (pr) => {
-    return pr.fileChangeSummary.additions;
-};
-exports.GetAddedLines = GetAddedLines;
-const GetDeletedLines = (pr) => {
-    return pr.fileChangeSummary.deletions;
-};
-exports.GetDeletedLines = GetDeletedLines;
-const GetChangedFilesCount = (pr) => {
-    return pr.fileChangeSummary.changedFilesList;
-};
-exports.GetChangedFilesCount = GetChangedFilesCount;
-const GetCommitsCount = (pr) => {
-    return pr.fileChangeSummary.commits;
-};
-exports.GetCommitsCount = GetCommitsCount;
-const GetReviewCount = (pr) => {
-    return pr.reviews.length;
-};
-exports.GetReviewCount = GetReviewCount;
-const GetCommentCount = (pr) => {
-    return pr.comments.length;
-};
-exports.GetCommentCount = GetCommentCount;
-
-
-/***/ }),
-
-/***/ 1245:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// for license and copyright look at the repository
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ReportConfigurationTable = exports.GetActiveMeasures = exports.UpdateConfigValues = void 0;
-const Report_Calculation_1 = __nccwpck_require__(4725);
-const Report_Definitions_1 = __nccwpck_require__(7693);
-const Report_Functions_1 = __nccwpck_require__(7771);
-const UpdateConfigValues = (configValues, measurementEntries) => {
-    // Update measurementEntries with config values from inputs
-    measurementEntries.forEach((entry) => {
-        // get the property value of inputs
-        entry.Info.ConfigValue = configValues[entry.Info.ConfigurationName];
-    });
-    return measurementEntries;
-};
-exports.UpdateConfigValues = UpdateConfigValues;
-const GetActiveMeasures = (entries) => {
-    return entries.filter((entry) => entry.Info.ConfigValue === 'yes');
-};
-exports.GetActiveMeasures = GetActiveMeasures;
-exports.ReportConfigurationTable = new Array();
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('include_raw_data_as_md_comment', new Report_Definitions_1.ConfigurationInfo('Add raw PR data as markdown comment in the PR Report (of the PR)', 0, 0, 'IncludeRawDataAsMarkdownComment', 'yes', Report_Definitions_1.ConfigurationCategory.ReportGeneratorValue), () => 0));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('create_report_comment', new Report_Definitions_1.ConfigurationInfo('Add PR report to the PR as comment', 0, 0, 'AddPrReportAsComment', 'yes', Report_Definitions_1.ConfigurationCategory.ReportGeneratorValue), () => 0));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('title_string', new Report_Definitions_1.ConfigurationInfo('Pull Request Report', 0, 0, 'ReportTitle', 'Pull Request Report', Report_Definitions_1.ConfigurationCategory.ReportGeneratorValue), () => 0));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('additions', new Report_Definitions_1.ConfigurationInfo('Number of added lines', 0, 0, 'ShowAdditions', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), Report_Functions_1.GetAddedLines));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('deleted', new Report_Definitions_1.ConfigurationInfo('Number of deleted lines', 0, 0, 'ShowDeleted', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), Report_Functions_1.GetDeletedLines));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('changedFiles', new Report_Definitions_1.ConfigurationInfo('Number of changed files', 0, 0, 'ShowNumberOfChangedFiles', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), Report_Functions_1.GetChangedFilesCount));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('commits', new Report_Definitions_1.ConfigurationInfo('Number of commits', 0, 0, 'ShowNumberOfCommits', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), Report_Functions_1.GetCommitsCount));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('reviews', new Report_Definitions_1.ConfigurationInfo('Number of reviews', 0, 0, 'ShowNumberOfReviews', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), Report_Functions_1.GetReviewCount));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('comments', new Report_Definitions_1.ConfigurationInfo('Number of comments (w/o review comments)', 0, 0, 'ShowNumberOfComments', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), Report_Functions_1.GetCommentCount));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('pr_lead_time', new Report_Definitions_1.ConfigurationInfo('PR lead time (from creation to close of PR)', 0, 0, 'ShowPRLeadTime', 'yes', Report_Definitions_1.ConfigurationCategory.TimeRelatedMeasures), (pr) => (0, Report_Calculation_1.MillisecondsToReadableDuration)((0, Report_Calculation_1.GetLeadTimeForPullRequest)(pr))));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('pr_time_branch_before_pr', new Report_Definitions_1.ConfigurationInfo('Time that was spend on the branch before the PR was created', 0, 0, 'ShowTimeSpendOnBranchBeforePrCreated', 'yes', Report_Definitions_1.ConfigurationCategory.TimeRelatedMeasures), (pr) => (0, Report_Calculation_1.MillisecondsToReadableDuration)((0, Report_Calculation_1.GetTimeSpendOnBranchBeforePRCreated)(pr))));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('pr_time_branch_before_merge', new Report_Definitions_1.ConfigurationInfo('Time that was spend on the branch before the PR was merged', 0, 0, 'ShowTimeSpendOnBranchBeforePrMerged', 'yes', Report_Definitions_1.ConfigurationCategory.TimeRelatedMeasures), (pr) => (0, Report_Calculation_1.MillisecondsToReadableDuration)((0, Report_Calculation_1.GetTimeSpendOnBranchBeforePRMerged)(pr))));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('pr_time_to_merge_after_last_review', new Report_Definitions_1.ConfigurationInfo('Time to merge after last review', 0, 0, 'ShowTimeToMergeAfterLastReview', 'yes', Report_Definitions_1.ConfigurationCategory.TimeRelatedMeasures), (pr) => (0, Report_Calculation_1.MillisecondsToReadableDuration)((0, Report_Calculation_1.GetTimeToMergeAfterLastReview)(pr))));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('no_of_comment_only_reviews', new Report_Definitions_1.ConfigurationInfo('Number of reviews that contains a comment to resolve', 0, 0, 'ShowNumberOfCommentOnlyReviews', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), (pr) => (0, Report_Calculation_1.GetNumberOfCommentOnlyReviews)(pr)));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('no_of_change_requested_reviews', new Report_Definitions_1.ConfigurationInfo('Number of reviews that requested a change from the author', 0, 0, 'ShowNumberOfRequestedChangeReviews', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), (pr) => (0, Report_Calculation_1.GetNumberOfRequestedChangeReviews)(pr)));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('no_of_approved_reviews', new Report_Definitions_1.ConfigurationInfo('Number of reviews that approved the Pull Request', 0, 0, 'ShowNumberOfApprovedReviews', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), (pr) => (0, Report_Calculation_1.GetNumberOfApprovedReviews)(pr)));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('pr_time_total_runtime_for_last_status_check_run', new Report_Definitions_1.ConfigurationInfo('Total runtime for last status check run (Workflow for PR)', 0, 0, 'ShowTimeTotalRuntimeForLastStatusCheckRun', 'yes', Report_Definitions_1.ConfigurationCategory.StatusCheckRelatedMeasures), (pr) => (0, Report_Calculation_1.MillisecondsToReadableDuration)((0, Report_Calculation_1.GetTotalRuntimeForLastStatusCheckRun)(pr))));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('pr_time_spend_in_pr_for_last_status_check_run', new Report_Definitions_1.ConfigurationInfo('Total time spend in last status check run on PR', 0, 0, 'ShowTimeSpendOnPrForLastStatusCheckRun', 'yes', Report_Definitions_1.ConfigurationCategory.StatusCheckRelatedMeasures), (pr) => (0, Report_Calculation_1.MillisecondsToReadableDuration)((0, Report_Calculation_1.GetTimeSpendInPrForLastStatusCheckRun)(pr))));
-exports.ReportConfigurationTable.push(new Report_Definitions_1.ReportConfigurationEntry('pr_total_number_of_participants', new Report_Definitions_1.ConfigurationInfo('Get the total number of participants of a Pull Request', 0, 0, 'ShowTotalNumberOfParticipants', 'yes', Report_Definitions_1.ConfigurationCategory.StaticMeasures), (pr) => (0, Report_Calculation_1.GetTotalNumberOfParticipants)(pr)));
-
-
-/***/ }),
-
-/***/ 5373:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-//GENERATED FILE FROM report.config.tests.ts - DO NOT EDIT!!!
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.config = void 0;
-const core = __importStar(__nccwpck_require__(2186));
-exports.config = {
-    IncludeRawDataAsMarkdownComment: core.getInput('IncludeRawDataAsMarkdownComment', { required: false }),
-    AddPrReportAsComment: core.getInput('AddPrReportAsComment', { required: false }),
-    ReportTitle: core.getInput('ReportTitle', { required: false }),
-    ShowAdditions: core.getInput('ShowAdditions', { required: false }),
-    ShowDeleted: core.getInput('ShowDeleted', { required: false }),
-    ShowNumberOfChangedFiles: core.getInput('ShowNumberOfChangedFiles', { required: false }),
-    ShowNumberOfCommits: core.getInput('ShowNumberOfCommits', { required: false }),
-    ShowNumberOfReviews: core.getInput('ShowNumberOfReviews', { required: false }),
-    ShowNumberOfComments: core.getInput('ShowNumberOfComments', { required: false }),
-    ShowNumberOfCommentOnlyReviews: core.getInput('ShowNumberOfCommentOnlyReviews', { required: false }),
-    ShowNumberOfRequestedChangeReviews: core.getInput('ShowNumberOfRequestedChangeReviews', { required: false }),
-    ShowNumberOfApprovedReviews: core.getInput('ShowNumberOfApprovedReviews', { required: false }),
-    ShowTotalNumberOfParticipants: core.getInput('ShowTotalNumberOfParticipants', { required: false }),
-    ShowTimeTotalRuntimeForLastStatusCheckRun: core.getInput('ShowTimeTotalRuntimeForLastStatusCheckRun', { required: false }),
-    ShowTimeSpendOnPrForLastStatusCheckRun: core.getInput('ShowTimeSpendOnPrForLastStatusCheckRun', { required: false }),
-    ShowPRLeadTime: core.getInput('ShowPRLeadTime', { required: false }),
-    ShowTimeSpendOnBranchBeforePrCreated: core.getInput('ShowTimeSpendOnBranchBeforePrCreated', { required: false }),
-    ShowTimeSpendOnBranchBeforePrMerged: core.getInput('ShowTimeSpendOnBranchBeforePrMerged', { required: false }),
-    ShowTimeToMergeAfterLastReview: core.getInput('ShowTimeToMergeAfterLastReview', { required: false }),
-};
+// export const GetPullRequestDataFiles = async (pullRequestNumber: number, repo = ''): Promise<unknown> => {
+//   let pullRequestData = undefined
+//   let repoName = ''
+//   if (repo !== '') {
+//     repoName = `--repo ${repo}`
+//   }
+//   const ghCliCommand = `gh pr view ${pullRequestNumber} ${gh_cli_arguments_files} ${repoName}`
+//   const { stdout, stderr } = await execAsync(ghCliCommand)
+//   if (stdout === ``) {
+//     throw new Error(`No data returned from GitHub CLI. Command: ${ghCliCommand} \n Stderr: ${stderr}`)
+//   }
+//   pullRequestData = stdout
+//   return JSON.parse(pullRequestData) as unknown
+// }
+// export const AddCommentToPR = async (commentFile: string, prNumber: number): Promise<void> => {
+//   const ghCliCommand = `gh pr comment ${prNumber} --body-file ${commentFile}`
+//   const { stdout, stderr } = await execAsync(ghCliCommand)
+//   if (stdout === ``) {
+//     throw new Error(`No data returned from GitHub CLI. Command: ${ghCliCommand} \n Stderr: ${stderr}`)
+//   }
+// }
 
 
 /***/ }),
@@ -561,9 +109,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const run_1 = __nccwpck_require__(3995);
-const action_config_args_1 = __nccwpck_require__(5373);
 const main = async () => {
-    await (0, run_1.run)(action_config_args_1.config);
+    await (0, run_1.run)();
 };
 main().catch((e) => core.setFailed(e instanceof Error ? e : String(e)));
 
@@ -606,46 +153,45 @@ exports.run = exports.SanitizeMarkdownComment = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const GitHubCliHelper_1 = __nccwpck_require__(7058);
-const Report_Definitions_1 = __nccwpck_require__(7693);
-const Report_Measures_1 = __nccwpck_require__(1245);
-const fs = __importStar(__nccwpck_require__(7147));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const SanitizeMarkdownComment = (comment) => {
     return comment.replaceAll(/<!--/g, '&lt;!--').replaceAll(/-->/g, '--&gt;');
 };
 exports.SanitizeMarkdownComment = SanitizeMarkdownComment;
-const CreatePRCommentFile = (raw_json_data, commentText, include_raw_data) => {
-    // generate random file name
-    const fileName = Math.random().toString(36).substring(7) + '.md';
-    let jsonString = '';
-    if (include_raw_data) {
-        jsonString = raw_json_data;
-    }
-    // write report string to file
-    fs.writeFileSync(fileName, `<!-- ${jsonString} -->\n${commentText}`);
-    return `${process.env.GITHUB_WORKSPACE || './'}/${fileName}`;
-};
-const GenerateReport = (activeConfigValues, pullRequestDataModel) => {
-    const report = new Report_Definitions_1.Report();
-    report.Entries = activeConfigValues;
-    report.Description = 'Test report';
-    report.Id = pullRequestDataModel.id.toString();
-    return report;
-};
-const IsConfigValueYes = (configValue) => {
-    return configValue.trim().toLowerCase() === 'yes';
-};
-const run = async (inputsFromWorkflow) => {
+// const CreatePRCommentFile = (raw_json_data: string, commentText: string, include_raw_data: boolean): string => {
+//   // generate random file name
+//   const fileName = Math.random().toString(36).substring(7) + '.md'
+//   let jsonString = ''
+//   if (include_raw_data) {
+//     jsonString = raw_json_data
+//   }
+//   // write report string to file
+//   fs.writeFileSync(fileName, `<!-- ${jsonString} -->\n${commentText}`)
+//   return `${process.env.GITHUB_WORKSPACE || './'}/${fileName}`
+// }
+// const GenerateReport = (
+//   activeConfigValues: ReportConfigurationEntry[],
+//   pullRequestDataModel: IPullRequest,
+// ): IReport => {
+//   const report = new Report()
+//   report.Entries = activeConfigValues
+//   report.Description = 'Test report'
+//   report.Id = pullRequestDataModel.id.toString()
+//   return report
+// }
+// const IsConfigValueYes = (configValue: string): boolean => {
+//   return configValue.trim().toLowerCase() === 'yes'
+// }
+const run = async () => {
     // take care that action is running only in PR context
     if (process.env.GITHUB_EVENT_NAME !== 'pull_request') {
         core.setFailed('Action is running outside of PR context');
         return 0;
     }
-    (0, Report_Measures_1.UpdateConfigValues)(inputsFromWorkflow, Report_Measures_1.ReportConfigurationTable);
-    const activeConfigValues = (0, Report_Measures_1.GetActiveMeasures)(Report_Measures_1.ReportConfigurationTable);
+    // const activeConfigValues = GetActiveMeasures(ReportConfigurationTable)
     // get PR data from github cli
-    const cliPullRequestData = await (0, GitHubCliHelper_1.GetPullRequestData)(github.context.issue.number);
-    const cliPullRequestDataAsString = (0, exports.SanitizeMarkdownComment)(JSON.stringify(cliPullRequestData));
+    // const cliPullRequestData = await GetPullRequestData(github.context.issue.number)
+    // const cliPullRequestDataAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
     const GetPullRequestDataFiles = await (0, GitHubCliHelper_1.GetPullRequestData)(github.context.issue.number);
     // const cliPullRequestDataFilesAsString = SanitizeMarkdownComment(JSON.stringify(cliPullRequestData))
     const yuyu = GetPullRequestDataFiles;
@@ -657,8 +203,6 @@ const run = async (inputsFromWorkflow) => {
         };
         const response = await axios_1.default.post("http://130.141.134.169:8000/getfunctionalarea", data);
         console.log(response.data);
-        // const response = await axios.get('http://130.141.134.169:8000/hello/')
-        // console.log(response.data);
     });
     // transform PR data to a typed model
     // const pullRequestDataModel = PullRequest.CreateFromJson(cliPullRequestData)
