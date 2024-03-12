@@ -76,26 +76,26 @@ export const run = async (inputsFromWorkflow: ConfigurationInputs): Promise<numb
     // console.log(response.data);
   })
   // transform PR data to a typed model
-  const pullRequestDataModel = PullRequest.CreateFromJson(cliPullRequestData)
-  // generate the report of the typed model
-  const generator = new ReportGenerator()
-  const report = GenerateReport(activeConfigValues, pullRequestDataModel)
-  // create report
-  report.Description = inputsFromWorkflow.ReportTitle as string
-  const reportAsString = generator.Generate(pullRequestDataModel, report)
+  // const pullRequestDataModel = PullRequest.CreateFromJson(cliPullRequestData)
+  // // generate the report of the typed model
+  // const generator = new ReportGenerator()
+  // const report = GenerateReport(activeConfigValues, pullRequestDataModel)
+  // // create report
+  // report.Description = inputsFromWorkflow.ReportTitle as string
+  // const reportAsString = generator.Generate(pullRequestDataModel, report)
 
-  const commentPath = CreatePRCommentFile(
-    cliPullRequestDataAsString,
-    reportAsString,
-    IsConfigValueYes(inputsFromWorkflow.IncludeRawDataAsMarkdownComment as string),
-  )
-  if (IsConfigValueYes(inputsFromWorkflow.AddPrReportAsComment as string)) {
-    await AddCommentToPR(commentPath, pullRequestDataModel.id)
-  }
+  // const commentPath = CreatePRCommentFile(
+  //   cliPullRequestDataAsString,
+  //   reportAsString,
+  //   IsConfigValueYes(inputsFromWorkflow.IncludeRawDataAsMarkdownComment as string),
+  // )
+  // if (IsConfigValueYes(inputsFromWorkflow.AddPrReportAsComment as string)) {
+  //   await AddCommentToPR(commentPath, pullRequestDataModel.id)
+  // }
 
-  const jsonPath = commentPath.replace(/\.md$/, '.json')
-  fs.writeFileSync(jsonPath, cliPullRequestDataAsString)
-  core.setOutput('json_report_path', jsonPath)
+  // const jsonPath = commentPath.replace(/\.md$/, '.json')
+  // fs.writeFileSync(jsonPath, cliPullRequestDataAsString)
+  // core.setOutput('json_report_path', jsonPath)
 
   return 0
 }
