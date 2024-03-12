@@ -2,9 +2,9 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { GetPullRequestData } from './GitHubCliHelper'
 import axios from 'axios';
-export const SanitizeMarkdownComment = (comment: string): string => {
-  return comment.replaceAll(/<!--/g, '&lt;!--').replaceAll(/-->/g, '--&gt;')
-}
+// export const SanitizeMarkdownComment = (comment: string): string => {
+//   return comment.replaceAll(/<!--/g, '&lt;!--').replaceAll(/-->/g, '--&gt;')
+// }
 
 // const CreatePRCommentFile = (raw_json_data: string, commentText: string, include_raw_data: boolean): string => {
 //   // generate random file name
