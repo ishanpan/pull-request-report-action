@@ -923,7 +923,7 @@ const run = async (inputsFromWorkflow) => {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(x)
+            body: `name: ${JSON.stringify(x)}`
         });
         console.log(response.data);
         // const response = await axios.get('http://130.141.134.169:8000/hello/')
