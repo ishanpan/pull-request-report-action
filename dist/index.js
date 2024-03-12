@@ -926,7 +926,7 @@ const run = async (inputsFromWorkflow) => {
         //   body: JSON.stringify(x)
         // });
         // console.log(response.data);
-        const response = await axios_1.default.get('http://ingbtcpic5nbe33.code1.emi.philips.com:8000/hello/');
+        const response = await axios_1.default.get('http://130.141.134.169:8000/hello/');
         console.log(response.data);
     });
     // transform PR data to a typed model
