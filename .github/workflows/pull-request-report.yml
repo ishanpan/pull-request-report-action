@@ -23,7 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.5.2
       - name: Generate PR report
-        id: generate_report
+        id: map_functionality
         uses: philips-software/pull-request-report-action@main
         env:
           GITHUB_TOKEN: ${{ github.token }}
